@@ -1,0 +1,20 @@
+from flask import Flask, render_template, request, url_for,make_response
+
+app = Flask(__name__)
+app.config.from_object("settings.Dev")
+
+
+#传参、地址名称
+@app.route('/index/<int:nid>',methods=['GET','POST'],endpoint='n1')
+def index(nid):
+    print(url_for('n1',nid=1))                    #url_for获取名称n1的地址
+    return 'Index'
+
+
+#定制响应体和响应头（通过浏览器F12查看响应）
+@app.route('/a')
+def res():
+    obj = make_response('Index')    #响应体
+    obj.set_cookie('key','value')   #设置cookie
+    obj.headers['xxx'] = '123'      #响应头
+    return obj

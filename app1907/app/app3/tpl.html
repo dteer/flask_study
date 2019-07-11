@@ -1,0 +1,31 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    {{ users.0 }}<br>
+    {{ users[1] }} <br>
+    {{ txt|safe }}<br>
+    {{ txt2 }}<br>
+    {{ func(5) }}<br>
+    {{ sa(1,2) }}<br>
+    <!-特殊之处可作为if的条件判断：if 1|db(2,3)-->
+    <!-管道符前为第一参数，db（2,3）参数 -->
+    {{ 1|db(2,3) }}<br>
+
+    {% if 1|db(2,3) %}
+        <div>判读yes</div>
+    {% else %}
+        <div>判读no</div>
+    {% endif %}
+
+    {% include 'login.html' %}
+    <br>
+    <br>
+    <h4>宏定义</h4>
+    {% macro cc(name,type='text',value='') %}
+        <span>1234</span>
+        <div>{{ name }}/{{ type }}</div>
+    {% endmacro %}
+    <h4>执行宏定义</h4>
+        {{ cc('n1') }}
+
+{% endblock %}

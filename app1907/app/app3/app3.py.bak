@@ -1,0 +1,101 @@
+from flask import Flask, request, render_template, redirect, url_for,session,Markup
+import functools
+
+app = Flask(__name__)
+app.config.from_object('settings.Dev')
+
+#假设为数据库内容
+STUDENT_DICT = {
+    1:{'name':'王龙泰','age':38,'gender':'中'},
+    2:{'name':'小东北','age':73,'gender':'男'},
+    3:{'name':'田硕','age':84,'gender':'男'},
+}
+
+@app.before_request
+def auth_2():
+    if request.path == '/login':
+        return None                 #返回None可通过
+    if not session.get('user'):
+        return redirect(url_for('login'))
+
+
+#装饰器
+def auth(func):
+    @functools.wraps(func)              #不改变原函数信息（函数名）
+    def inner(*args,**kwargs):
+        if not session.get('user'):
+            return redirect(url_for('login'))
+        ret = func(*args,**kwargs)
+        return ret
+    return inner
+
+
+
+@app.route('/login',methods=['GET','POST'])         #装饰器的的先后顺序及装饰器的函数名相同问题
+def login():
+    if request.method == 'GET':
+        return render_template('login.html')
+    user = request.form.get('user')
+    pwd = request.form.get('pwd')
+    if user == 'oldboy' and pwd == '123':
+        session['user'] = user
+        return redirect('/index')
+    return render_template('login.html',error='用户名或密码错误')
+
+
+@app.route('/index')
+def index():
+    return render_template('index.html', stu_dic=STUDENT_DICT)
+
+@app.route('/delete/<int:nid>')
+def delete(nid):
+    del STUDENT_DICT[nid]
+    return redirect(url_for('index'))
+
+@app.route('/detail/<int:nid>')
+def detail(nid):
+    info = STUDENT_DICT[nid]
+    return render_template('detail.html',info=info)
+
+
+#模板全局变量
+@app.template_global()
+def sa(a1,a2):
+    return a1+a2
+
+#模板全局变量
+@app.template_filter()
+def db(a1,a2,a3):
+    return a1+a2+a3
+
+def func(arg):
+    return arg + 1
+
+@app.route('/tpl')
+def tpl():
+    context = {
+        'users':['longtai','liusong','zhaohuhu'],
+        'txt':"<input type='text'>",
+        'txt2':Markup("<input type='text'>"),
+        'func':func
+    }
+    return render_template('tpl.html',**context)
+
+
+@app.route('/page1')
+def page1():
+    flash('临时数据存储')
+    # flash('临时数据存储','error)    #根据分类
+
+    return 'Session'
+
+@app.route('/page2')
+def page2():
+    print(get_flashed_messages())
+    # print(get_flashed_messages(category_filter=['error'])) #取得分类内容
+
+    return 'Session'
+
+
+if __name__ == '__main__':
+    app.run(DEBUG=True)
