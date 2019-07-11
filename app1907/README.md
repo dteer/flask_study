@@ -16,7 +16,7 @@
 
 ## 1、app.py.apk中内容介绍
 
-* 模块+静态文件，app = Flask(__name,.....)
+* 模块+静态文件，app = Flask(\_\_name\_\_,.....)
 
 * 路由
   * app.route('/index',methods=['GET'])
