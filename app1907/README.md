@@ -1,22 +1,22 @@
 # 大纲
 
-[第一章 flask的介绍](# 第一章 flask的介绍)
-
-​	[1、app.py.apk中内容介绍](# 1、app.py.apk中内容介绍)
-
-​	[2、app.py中内容介绍](# 2、app.py中内容介绍)
-
-​		[2.1、配置文件](# 2.1、配置文件)
-
-​		[2.2、地址名称、传参](# 2.2、地址名称、传参)
 
 
+[第一章 flask的介绍](#第一章 flask的介绍)
+
+​	[1、app.py.apk中介绍内容](#1、app.py.apk中介绍内容)
+
+​	[2、app.py中介绍内容](#2、app.py中介绍内容)
+
+​	[2.1、配置文件](#2.1、配置文件)
+
+​	[2.2、地址名称、传参](#2.2、地址名称、传参)
 
 # 第一章 flask的介绍
 
-## 1、app.py.apk中内容介绍
+## 1、app.py.apk中介绍内容
 
-* 模块+静态文件，app = Flask(\_\_name\_\_,.....)
+* 模块+静态文件，app = Flask(__name,.....)
 
 * 路由
   * app.route('/index',methods=['GET'])
@@ -38,7 +38,7 @@
   * session['xx'] = 123	设置session	
   * session.get('xx')         获取session
 
-## 2、app.py中内容介绍
+## 2、app.py中介绍内容
 
 ### 2.1、配置文件
 
