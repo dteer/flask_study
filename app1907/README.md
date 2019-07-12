@@ -1,7 +1,26 @@
+[TOC]
 
-# 第一章 flask的介绍
+# 特殊章节（知识点概要）
 
-## 1 app1.py.bak中介绍内容
+- 1-5小节主要讲解（可根据需求进行内容回顾）
+  - 配置文件
+  - 路由
+  - 视图：FBV
+  - 请求
+  - 响应
+  - 模板
+  - session
+  - flash
+  - 中间件
+  - 特殊装饰器
+
+* 
+
+
+
+# 第一章 flask基础介绍
+
+## 1.1 app1.py.bak中介绍内容
 
 * 模块+静态文件，app = Flask(__name,.....)
 
@@ -25,7 +44,7 @@
   * session['xx'] = 123	设置session	
   * session.get('xx')         获取session
 
-## 2 app2.py.bak中介绍内容
+## 1.2 app2.py.bak中介绍内容
 
 ### 2.1 index()函数的知识点介绍
 
@@ -86,7 +105,7 @@ for key in dir(cls):
       DEBUG = True
   ```
 
-#### 2.2 地址名称、传参
+#### 2.1.2 地址名称、传参
 
 > app.py
 
@@ -133,7 +152,7 @@ obj.set_cookie('key','value')		#设置cookie
 return	obj
 ```
 
-## 3 app3.py.bak中介绍内容
+## 1.3 app3.py.bak中介绍内容
 
 > 对下面操作需要把app3文件放置原本位置，并登录 oldboy	123
 
@@ -202,6 +221,7 @@ index()			#输出函数名称为：	index
   > 应@auth def index():pass 视为一个整体给@app.route()所装饰 
 
   ```python
+  import functools
   #装饰器
   def auth(func):
       @functools.wraps(func)              #不改变原函数信息（函数名）
@@ -409,4 +429,368 @@ def page2():
 
     return 'Session'
 ```
+
+## 1.4 app4.py.bak中介绍内容
+
+> 中间件
+
+### 4.1 flask源码入口
+
+> 源码执行流程
+
+```python
+1、flask启动
+	app = Flsk(__name__)
+	app.run()
+2、run方法进入源码
+	#run方法一直执行到run_simple(),并传递self对象，进入uwsgi死循环，直到请求发生
+    try:
+        run_simple(host, port, self, **options)
+    finally:
+        # reset the first request information if the development server
+        # reset normally.  This makes it possible to restart the server
+        # without reloader and that stuff from an interactive shell.
+        self._got_first_request = False
+3、请求过来时，会调用函数中的 __call__方法，flask入口
+	   def __call__(self, environ, start_response):
+           """The WSGI server calls the Flask application object as the
+           WSGI application. This calls :meth:`wsgi_app` which can be
+           wrapped to applying middleware."""
+           return self.wsgi_app(environ, start_response)
+```
+
+
+
+### 4.2 中间件实现
+
+> flask中间键只能在请求前后添加一些功能，并不能传递参数或return值给视图函数
+
+```python
+class Middleware(object):
+    def __init__(self,old_wsgi_app):
+        self.old_wsgi_app = old_wsgi_app
+
+    def __call__(self, *args, **kwargs):
+        print('前')
+        ret = self.old_wsgi_app(*args,**kwargs)
+        print('后')
+        return ret
+
+
+if __name__ == '__main__':
+    app.wsgi_app = Middleware(app.wsgi_app)
+    app.run()
+```
+
+## 1.5 app5.py.bak中介绍内容
+
+> 特殊装饰器(类似django中间件)
+
+### 5.1 类装饰器
+
+> ```python
+> @app.before_request
+> @app.after_request
+> ```
+
+​	
+
+* 无返回值
+
+```python
+@app.before_request
+def x1():
+    print('before1')
+
+@app.before_request
+def xx1():
+    print('before2')
+
+@app.after_request
+def x2(response):
+    print('after1')
+    return response
+
+@app.after_request
+def xx2(response):
+    print('after2')
+    return response
+
+@app.route('/index')
+def index():
+    print('index')
+    return 'index'
+
+#当用户请求127.0.0.1:5000/index时，返回的结果
+	before1
+	before2
+	index
+	after2
+	after1
+```
+
+> 通过上边的结果可以观察到 用户在请求时，
+>
+> 先会执行 @app.before_request, 再执行 视图函数，后执行 @app.after_request
+
+[图片位置：flask_study/app1907/img/1.png]()
+
+![](/home/tang/mnt/F/学习/flask_study/app1907/img/1.png)
+
+* 有返回值
+
+  > 当其中一个@app.before_request 中存在返回值的执行顺序
+
+  
+
+```python
+@app.before_request
+def x1():
+    print('before1')
+    return '走'
+
+#对应的后端结果
+	before1
+	after2
+	after1
+#对应的前端结果
+	走
+```
+
+> 通过上边的结果可以观察到 用户在请求时，
+>
+> 先会执行 @app.before_request, 如果存在return，直接返回前端，再执行 @app.after_request
+
+[图片位置：flask_study/app1907/img/2.png]()
+
+
+![](/home/tang/mnt/F/学习/flask_study/app1907/img/2.png)
+
+* before_first_request
+  * 只在程序启动，第一次请求使用，
+
+### 5.2 模板装饰器
+
+	> template_global		
+	>
+	> template_filter
+	>
+	> 在3.2.2中有介绍和使用
+
+
+
+### 5.3 错误信息定制装饰器
+
+> app.errorhandler
+>
+> 当页面响应404,500 等响应码，都可以通过定制信息返回
+
+
+
+```python
+#该函数作用，当响应码为404，对该页面进行定制并返回
+@app.errorhandler(404)
+def not_found(arg):
+    print(arg)
+    return '没找到'
+```
+
+# 第二章 flask再探
+
+### 2.1 视图函数
+
+#### 2.1.1 flask源码探索
+
+> 目的：探索@route.app()源码（本质闭包）
+>
+> 路由系统 + endpoint工作机制
+
+
+
+```python
+@app.route('/xxx',endpoint=None)
+def index():
+    return 'index'
+
+#1、通过跳转到app.route()的源码
+	def route(self, rule, **options):
+        def decorator(f):
+            endpoint = options.pop("endpoint", None)
+            self.add_url_rule(rule, endpoint, f, **options)
+            return f
+        return decorator
+   """
+   	源码剖析：在路由源码中，先pop取出endpoint，为空设置为None
+   			再执行self.add_url_rule()
+   				rule = '/xxx'
+   				endpoint = None
+   				f = index	#视图函数
+   				**options	其他参数
+   """
+```
+
+​		
+
+##### 2.1.1.1 路由系统源码
+
+> 从上述可以得到路由系统的主要实现函数为 self.add_url_rule()
+>
+> 下文为通过源码，可以了解并改造源码的过程，
+>
+> 目的：学习查看源码的过程和对源码掌握是否正确
+
+```python
+#通过源码进行改造路由系统
+
+def index():
+    return 'index'
+#方法一
+app.add_url_rule('/xxx',None,index)
+
+#方法二
+routers = [
+    ('/xxx',index)
+]
+for item in routers:
+    app.add_url_rule(item[0],None,item[1])
+```
+
+​	
+
+##### 2.1.1.2  endpoint 源码
+
+> 在探 add_url_rule()方法
+
+* endpoint 为None做的处理
+
+```python
+#在 add_url_rule方法在一开始中
+if endpoint is None:
+    endpoint = _endpoint_from_view_func(view_func)
+    options["endpoint"] = endpoint
+    
+#在_endpoint_from_view_func该方法中
+def _endpoint_from_view_func(view_func):
+    assert view_func is not None, "expected view func if endpoint is not provided."
+    return view_func.__name__
+
+"""
+从上述可以看到如果endpoint为None，endpoint= 视图函数名
+"""
+```
+
+* endpoint 不为空做的处理
+
+  ```python
+  #在add_url_rule方法中
+  self.view_functions = {}
+  if view_func is not None:
+      old_func = self.view_functions.get(endpoint)
+      if old_func is not None and old_func != view_func:
+          raise AssertionError(
+              "View function mapping is overwriting an "
+              "existing endpoint function: %s" % endpoint
+          )
+          self.view_functions[endpoint] = view_func
+         
+   """
+   view_func是作为add_url_rule中参数，为视图函数名
+   在源码中可以看到通过view_functions字典保存{'路由名':'视图函数名'}
+   逻辑：先保存旧的key:value
+   		如果有新的传进来，通过路由名获取旧的函数名，和新的函数名判断，
+   		如果不相等，证明存在两个或两个以上的函数名有相同的路由名
+   """
+  
+  ```
+
+#### 2.1.2 app.route参数
+
+* rule		url 规则
+
+* view_func        视图函数名称
+
+* endpoint=None       名称，用于反向生产url
+
+* methods=None         允许的请求方法   get...
+
+* strict_slashes=None    对url最后的 /  符号是否严格要求
+
+* redirect_to=None          重定向到指定url
+
+* defaults=None               默认值，当url中无参数，视图函数需要参数时使用
+
+* subdomain=None         子域名访问          
+
+  * ```python
+    from flask import Flask,request
+    
+    app = Flask(__name__)
+    app.config['SERVER_NAME'] = 'wupeiqi.com:5000'
+    
+    """
+    测试用：在host文件添加信息 
+    127.0.0.1 wupeiqi.com
+    127.0.0.1 web.wupeiqi.com
+    127.0.0.1 admin.wupeiqi.com
+    """
+    
+    #http://admin.wupeiqi.com:5000/
+    @app.route('/',subdomain='admin')
+    def admin_index():
+        return "admin.your-domain.tld"
+    
+    #http://web.wupeiqi.com:5000/
+    @app.route('/',subdomain='web')
+    def web_index():
+        return "web.your-domain.tld"
+    
+    #http://xxx.wupeiqi.com:5000/
+    @app.route('/dynamic',subdomain='<username>')
+    def web_index(username):
+        return username + ".your.domain.tld"
+    ```
+
+
+#### 2.1.3 CBV模式
+
+> 对应 app6.py.bak文件中体现
+
+```python
+
+def auth(func):
+    @functools.wraps(func)              #不改变原函数信息（函数名）
+    def inner(*args,**kwargs):
+        ret = func(*args,**kwargs)
+        return ret
+    return inner
+
+
+
+class UserView(views.MethodView):
+    methods = ['GET']               #方法过滤
+    decorators = [auth]             #添加装饰器
+    def get(self, *args, **kwargs):
+        return 'GET'
+
+    def post(self, *args, **kwargs):
+        return 'POST'
+
+
+app.add_url_rule('/user', None, UserView.as_view('uuu'))        #添加路由
+```
+
+
+
+#### 2.1.4 自定制正则路由
+
+
+> from werkzeug.routing import BaseConverter
+>
+> 自定制路由需要创建自定制类并继承 BaseConverter类
+>
+> 详情查看 app7.py.bak
+
+
+
+## 2.2 session源码探索
 

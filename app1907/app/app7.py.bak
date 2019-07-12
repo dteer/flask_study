@@ -1,0 +1,52 @@
+from flask import Flask, request,url_for
+from werkzeug.routing import BaseConverter
+
+app = Flask(__name__)
+
+
+#定制正则类
+class RegexConverter(BaseConverter):
+    """
+    自定义url匹配正则表达式
+    """
+    def __init__(self,map,regex):
+        super(RegexConverter,self).__init__(map)
+        self.regex = regex
+
+    def to_python(self, value):
+        """
+        路由匹配，匹配成功后传递给视图函数中的参数的值
+        :param value:
+        :return:
+        """
+        return int(value)
+
+    def to_url(self, value):
+        """
+        使用url_for 反向生成url时，传递的参数经过该方法处理，返回的值用于生成url中的参数
+        :param value:
+        :return:
+        """
+        val = super(RegexConverter,self).to_url(value)
+        return val
+
+app.url_map.converters['reg'] = RegexConverter
+
+"""
+1、用户发送请求
+2、flask内部进行正则匹配
+3、调用to_python(正则匹配结果)方法
+4、to_python方法的返回值会交给视图函数的参数
+"""
+
+@app.route('/index/<reg("\d+"):nid>')
+def index(nid):
+    print(nid,type(nid))
+
+    print(url_for('index',nid=nid))
+
+    return "index"
+
+
+if __name__ == '__main__':
+    app.run()

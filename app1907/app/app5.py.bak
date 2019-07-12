@@ -1,0 +1,34 @@
+from flask import Flask,request
+
+app = Flask(__name__)
+app.config.from_object('settings.Dev')
+
+
+@app.before_request
+def x1():
+    print('before1')
+
+@app.before_request
+def xx1():
+    print('before2')
+
+@app.after_request
+def x2(response):
+    print('after1')
+    return response
+
+@app.after_request
+def xx2(response):
+    print('after2')
+    return response
+
+
+@app.errorhandler(404)
+def not_found(arg):
+    print(arg)
+    return '没找到'
+
+@app.route('/index')
+def index():
+    print('index')
+    return 'index'

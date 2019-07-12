@@ -1,0 +1,29 @@
+from flask import Flask, request, views
+import functools
+
+app = Flask(__name__)
+
+
+def auth(func):
+    @functools.wraps(func)              #不改变原函数信息（函数名）
+    def inner(*args,**kwargs):
+        ret = func(*args,**kwargs)
+        return ret
+    return inner
+
+
+
+class UserView(views.MethodView):
+    methods = ['GET']               #方法过滤
+    decorators = [auth]             #添加装饰器
+    def get(self, *args, **kwargs):
+        return 'GET'
+
+    def post(self, *args, **kwargs):
+        return 'POST'
+
+
+app.add_url_rule('/user', None, UserView.as_view('uuu'))        #路由
+
+if __name__ == '__main__':
+    app.run()
