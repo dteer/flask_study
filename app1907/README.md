@@ -792,5 +792,60 @@ app.add_url_rule('/user', None, UserView.as_view('uuu'))        #添加路由
 
 
 
-## 2.2 session源码探索
+## 2.2 源码探索
+
+> 探究flask入口所做的内容
+
+### 2.2.1 flask入口操作
+
+```python
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/index')
+def index():
+    return 'Index'
+
+if __name__ == '__main__':
+    app.run()
+    
+   
+源码跳转：
+1. 入口
+	    def __call__(self, environ, start_response):
+        """The WSGI server calls the Flask application object as the
+        WSGI application. This calls :meth:`wsgi_app` which can be
+        wrapped to applying middleware."""
+        return self.wsgi_app(environ, start_response)
+2. 执行流程
+	    def wsgi_app(self, environ, start_response):
+        ctx = self.request_context(environ)
+            """
+            request_context()
+            #1.获取environ病对其进行再次封装
+            #2.从environ中获取名称为session的cookie，解密，反序列化
+            #3.两个东西放在“某个神奇”的地方
+        	"""
+        error = None
+        try:
+            try:
+                ctx.push()
+                #4.执行视图函数
+                response = self.full_dispatch_request()
+            except Exception as e:
+                error = e
+                response = self.handle_exception(e)
+            except:  # noqa: B001
+                error = sys.exc_info()[1]
+                raise
+            return response(environ, start_response)
+        finally:
+            if self.should_ignore_error(error):
+                error = None    
+             """
+        	5.从“某个神奇”获取session，加密，序列化 ===》写cookie
+        	6. 把‘某个神奇’的位置清空 
+        	"""
+            ctx.auto_pop(error)
+```
 
