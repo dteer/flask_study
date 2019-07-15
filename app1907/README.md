@@ -798,6 +798,8 @@ app.add_url_rule('/user', None, UserView.as_view('uuu'))        #添加路由
 
 ### 2.2.1 flask入口操作
 
+> 相关的源码探索请查看 源码探索.md
+
 ```python
 from flask import Flask
 app = Flask(__name__)
@@ -849,3 +851,18 @@ if __name__ == '__main__':
             ctx.auto_pop(error)
 ```
 
+## 2.3 蓝图
+
+> 给开发者提供目录结构，具体蓝图模板
+
+* 蓝图
+
+  * 自定义模板、静态文件
+
+  * 某一类url添加前缀   
+
+    *  eg: app.register_blueprint(ac,url_prefix='/account')  
+
+  * 给一类url添加before_request等全局变量，使用范围为该蓝图
+
+    
