@@ -866,3 +866,369 @@ if __name__ == '__main__':
   * 给一类url添加before_request等全局变量，使用范围为该蓝图
 
     
+
+
+
+# 第三章 上下文管理 request
+
+## 1、偏函数
+
+> 帮助开发者自动传递参数
+
+```python
+#注意函数需要的传参个数
+import functools
+def index(a1,a2):
+    return a1 + a2
+new_res = functools.partial(index,42)
+
+print(index(42,1))		#43
+print(new_res(1))		#43
+
+```
+
+
+
+## 2、面向对象
+
+### 2.1 执行父类的方法
+
+> **\_\_mro\_\_ 是继承关系的顺序（注意执行继承类的方法）**
+
+```python
+#继承的方法的使用
+class Base(object):
+    def func(self):
+        print('Base.func')
+
+class Foo(Base):
+    def func(self):
+        #方式一：根据mro的顺序执行方法
+        super(Foo,self).func()
+        #方式二：主动执行Bose类的方法
+        Base.func(self)
+        print('Foo.func')
+foo = Foo()
+foo.func()
+print(foo.__mro__)
+
+#结果：
+    Base.func
+    Base.func
+    Foo.func
+    (<class '__main__.Foo_1'>, <class '__main__.Base_1'>, <class 'object'>)
+
+```
+
+### 2.2 super的执行过程
+
+> *关注点：注意在Base类中super(Base, self).func()，*
+>
+> *为何Base的类为object，但父类中不存在func函数，照样可以执行*
+>
+> *而定义obj = Base(),	obj.fun()	则报错*
+
+```python
+class Base(object):
+    def func(self):
+        super(Base, self).func()
+        print('Base.func')
+
+class Bar(object):
+
+    def func(self):
+        print('Base.func')
+
+class Foo(Base,Bar):
+    pass
+
+obj = Foo()
+obj.func()
+print(Foo.__mro__)
+
+#结果：
+    Bar.func
+    Base.func
+    (<class '__main__.Foo'>, <class '__main__.Base'>, <class '__main__.Bar'>, <class 'object'>)
+
+```
+
+### 2.3  \_\_getattr\_\_ ,  \_\_settattr\_\_ 易错点
+
+> 原理没够清晰，暂存
+
+```python
+class Foo(object):
+    def __init__(self):
+        self.storage = {}
+        object.__setattr__(self,'storage',{})
+
+    def __getattr__(self, item):
+        print('get',item)
+
+    def __setattr__(self, key, value):
+        # print(key,value)
+        print('set',self.storage)
+
+
+obj = Foo()
+obj.xx = 123
+```
+
+### 2.4 面向对象中双下划线的特殊方法
+
+  * \_\_call\_\_
+
+    		* flask源码请求入口
+    		* django请求入口（WSGIHandler.\_\_call\_\_）
+
+  * \_\_init\_\_
+
+      * 实例化
+
+  * get,set,del  ---attr
+
+    		* \_\_getattr\_\_
+      * \_\_setattr\_\_
+      * \_\_delattr\_\_
+          * flask Local对象
+
+  * \_\_new\_\_
+
+    		* 单例模式
+    		* rest framework序列化
+
+* get,set,del ---item
+
+    * _\_setitem\_\_
+
+    * \_\_getitem\_\_
+
+    * \_\_delitem\_\_
+
+        * ```python
+          当对象加中括号是，调用对应的特殊方法
+          obj = obj()
+          obj['item']
+          ```
+
+          
+
+  * \_\_dict\_\_
+
+      * api封装返回数据时：BaseResponse
+
+  * \_\_repr\_\_
+
+  * \_\_mro\_\_
+
+      * 父类继承顺序
+
+  * \_\_str\_\_
+
+  * \_\_slot\_\_
+
+      * 允许对象中使用的属性
+      * flask 中Local对象中使用
+
+### 2.5 方法和函数
+
+​	
+
+```python
+class Foo(object):
+    def func(self)
+    	pass
+
+
+#执行方式一
+obj = Foo()
+obj.func()	#func方法
+
+#执行方式二
+obj = Foo()
+Foo.func(obj)		#func函数
+Foo.func(123)
+
+#验证
+from types import FunctionType,MethodType
+print(isinstance(obj.func,FunctionType))
+```
+
+
+
+## 3、基于列表的栈
+
+```python
+class stack(object):
+
+    def __init__(self):
+        self.data = []
+
+    def push(self,val):
+        self.data.append(val)
+
+    def pop(self):
+        return self.data.pop()
+
+    def top(self):
+        return self.data[-1]
+
+_stack = stack()
+_stack.push('家')
+_stack.push('鱼')
+
+print(_stack.pop())
+print(_stack.pop())
+#结果：
+	鱼
+    家
+```
+
+## 4、flask源码中的local()
+
+> 知识点：1、\_\_slots\_\_ 
+>
+> ​				2、object.\_\_setattr\_\_(self, "__storage__", {})
+>
+> ​				3、利用异常做操作
+>
+> 作用：为每个线程开辟一个空间
+
+```python 
+try:
+    from greenlet import getcurrent as get_ident
+except ImportError:
+    try:
+        from thread import get_ident
+    except ImportError:
+        from _thread import get_ident
+
+class Local(object):
+    #Loacl对象只能有属性 __storage__、__ident_func__
+    __slots__ = ("__storage__", "__ident_func__")       
+
+    def __init__(self):
+        object.__setattr__(self, "__storage__", {})
+        object.__setattr__(self, "__ident_func__", get_ident)
+
+    def __getattr__(self, name):
+        try:
+            return self.__storage__[self.__ident_func__()][name]
+        except KeyError:
+            raise AttributeError(name)
+
+    
+    def __setattr__(self, name, value):
+        ident = self.__ident_func__()
+        storage = self.__storage__
+        try:
+            storage[ident][name] = value
+        except KeyError:
+            storage[ident] = {name: value}
+
+    def __delattr__(self, name):
+        try:
+            del self.__storage__[self.__ident_func__()][name]
+        except KeyError:
+            raise AttributeError(name)
+
+obj = Local()   #执行: __init__
+obj.session = 123       #执行 __setattr__
+#__storage__ = {'线程id或协程id':{'session':'123'}}
+print(obj.session)      #执行：__getattr__
+
+```
+
+## 5、flask源码中的localstack()
+
+> **把Local维护成一个栈**
+
+```python
+#__storage__ = { stack:[] }
+import Local
+class LocalStack(object):
+
+    def __init__(self):
+        self._local = Local()
+
+    def push(self, value):
+        rv = getattr(self._local, "stack", None)
+        if rv is None:
+            self._local.stack = rv = []
+        rv.append(value)
+        return rv
+
+
+    def pop(self):
+        stack = getattr(self._local, "stack", None)
+        if stack is None:
+            return None
+
+        #当列表中大于1，就会不断移除内容，当等于1,不再执行移除
+        elif len(stack) == 1:
+            # release_local(self._local)
+            return stack[-1]
+        else:
+            return stack.pop()
+
+    def top(self):
+        try:
+            return self._local.stack[-1]
+        except(ArithmeticError,ImportError):
+            return None
+
+
+
+obj = LocalStack()
+obj.push('小明')
+obj.push('小米')
+
+print(obj.pop())
+```
+
+## 6、flask对上述知识点的应用
+
+> flask源码中的部分应用原理如下
+
+```python
+class RequestContext(object):
+    def __init__(self):
+        self.request = 'XX'
+        self.session = 'oo'
+
+
+_request_ctx_stack = LocalStack()
+_request_ctx_stack.push(RequestContext())
+
+def _lookup_req_object(arg):
+    ctx = _request_ctx_stack.top()
+    return getattr(ctx,arg)
+
+
+# print(get_request_or_session('request'))
+# print(get_request_or_session('session'))
+
+
+request = functools.partial(_lookup_req_object,'request')
+session = functools.partial(_lookup_req_object,'session')
+
+print(request())
+print(session())
+```
+
+## 7、上下文管理流程
+
+>  上下文管理：request ，具体查看图 flask_study/app1907/img/上下文管理流程图.png
+
+![](/home/tang/mnt/F/学习/flask_study/app1907/img/上下文管理流程图.png)
+
+# 第四章 flask_session
+
+> flask 中的session主要通过 SecureCookieSessionInterface类实现
+
+* 具体实现 查看 app8_flask_session原理.py.bak
+  * 需要结合flask的源码找到对应的入口（深入）
+
+# 第五章
+

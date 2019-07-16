@@ -1,7 +1,6 @@
 
-def b():
-    print('123')
+li = [1,2,3,4]
+li1 = li
 
-a = getattr(b,'b',None)
 
-print(type(a))
+print(id(li),id(li1))

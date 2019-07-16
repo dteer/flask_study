@@ -1,0 +1,29 @@
+from flask import Flask,request,session
+from flask.sessions import SecureCookieSessionInterface
+# from flask.ext.session import Session 老版
+from flask_session import Session       #新版
+import redis
+
+app = Flask(__name__)
+
+#原理,替换了原类 app.session_interface = SecureCookieSessionInterface()
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_REDIS'] = redis.Redis(host='127.0.0.1',port=6379,password='')
+Session(app)
+
+
+@app.route('/login')
+def login():
+    session['user'] = 'alex'
+    return 'login'
+
+
+@app.route('/index')
+def index():
+    print(session.get('user'))
+    return 'Index'
+
+
+
+if __name__ == '__main__':
+    app.run()
