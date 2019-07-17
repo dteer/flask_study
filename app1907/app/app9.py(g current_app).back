@@ -1,0 +1,20 @@
+from flask import Flask, request,current_app ,g, redirect
+
+app = Flask(__name__)
+
+@app.route('/login')
+def login():
+    g.x1 = 123
+    return "Login"
+
+@app.route('/index')
+def index():
+    g.xx = 123              #当重定向时，浏览器重定向，两次请求
+    # return "Index"
+    return redirect('/login')
+
+#一次请求的开始到结束：g的生命周期，可全局使用
+#current_app 为当前的app对象
+
+if __name__ == '__main__':
+    app.run()

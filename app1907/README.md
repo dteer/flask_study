@@ -869,9 +869,11 @@ if __name__ == '__main__':
 
 
 
-# 第三章 上下文管理 request
+# 第三章 上下文管理 
 
-## 1、偏函数
+## 1、请求上下文
+
+### 1.1、偏函数
 
 > 帮助开发者自动传递参数
 
@@ -887,11 +889,9 @@ print(new_res(1))		#43
 
 ```
 
+### 1.2、面向对象
 
-
-## 2、面向对象
-
-### 2.1 执行父类的方法
+#### 1.2.1 执行父类的方法
 
 > **\_\_mro\_\_ 是继承关系的顺序（注意执行继承类的方法）**
 
@@ -920,7 +920,7 @@ print(foo.__mro__)
 
 ```
 
-### 2.2 super的执行过程
+#### 1.2.2 super的执行过程
 
 > *关注点：注意在Base类中super(Base, self).func()，*
 >
@@ -953,7 +953,7 @@ print(Foo.__mro__)
 
 ```
 
-### 2.3  \_\_getattr\_\_ ,  \_\_settattr\_\_ 易错点
+####　1.2.3  \_\_getattr\_\_ ,  \_\_settattr\_\_ 易错点
 
 > 原理没够清晰，暂存
 
@@ -975,12 +975,12 @@ obj = Foo()
 obj.xx = 123
 ```
 
-### 2.4 面向对象中双下划线的特殊方法
+#### 1.2.4 面向对象中双下划线的特殊方法
 
   * \_\_call\_\_
 
     		* flask源码请求入口
-    		* django请求入口（WSGIHandler.\_\_call\_\_）
+        		* django请求入口（WSGIHandler.\_\_call\_\_）
 
   * \_\_init\_\_
 
@@ -996,7 +996,7 @@ obj.xx = 123
   * \_\_new\_\_
 
     		* 单例模式
-    		* rest framework序列化
+        		* rest framework序列化
 
 * get,set,del ---item
 
@@ -1031,7 +1031,7 @@ obj.xx = 123
       * 允许对象中使用的属性
       * flask 中Local对象中使用
 
-### 2.5 方法和函数
+#### 1.2.5 方法和函数
 
 ​	
 
@@ -1055,9 +1055,7 @@ from types import FunctionType,MethodType
 print(isinstance(obj.func,FunctionType))
 ```
 
-
-
-## 3、基于列表的栈
+### 1.3、基于列表的栈
 
 ```python
 class stack(object):
@@ -1085,7 +1083,7 @@ print(_stack.pop())
     家
 ```
 
-## 4、flask源码中的local()
+### 1.4、flask源码中的local()
 
 > 知识点：1、\_\_slots\_\_ 
 >
@@ -1140,7 +1138,7 @@ print(obj.session)      #执行：__getattr__
 
 ```
 
-## 5、flask源码中的localstack()
+### 1.5、flask源码中的localstack()
 
 > **把Local维护成一个栈**
 
@@ -1187,7 +1185,7 @@ obj.push('小米')
 print(obj.pop())
 ```
 
-## 6、flask对上述知识点的应用
+### 1.6、flask对上述知识点的应用
 
 > flask源码中的部分应用原理如下
 
@@ -1217,11 +1215,21 @@ print(request())
 print(session())
 ```
 
-## 7、上下文管理流程
+### 1.7、上下文管理流程
 
 >  上下文管理：request ，具体查看图 flask_study/app1907/img/上下文管理流程图.png
 
+
+
 ![](/home/tang/mnt/F/学习/flask_study/app1907/img/上下文管理流程图.png)
+
+
+
+
+
+## 2、app上下文管理
+
+
 
 # 第四章 flask_session
 
@@ -1230,5 +1238,43 @@ print(session())
 * 具体实现 查看 app8_flask_session原理.py.bak
   * 需要结合flask的源码找到对应的入口（深入）
 
-# 第五章
+# 第五章 数据库
+
+> pip install DBUtils
+>
+> 在使用原生态数据库语句需要使用连接池以及封装定制的sqlhelper（避免重复劳动）
+
+
+## 5.1 连接池		
+
+```python
+from DBUtils.PooledDB import PooledDB, SharedDBConnection
+import pymysql
+
+POOL = PooledDB(
+    creator=pymysql,  # 使用连接数据库的模块
+    maxconnections=6,  # 连接池允许的最大连接数，0和None代表不限制连接数
+    mincached=2,  # 初始化时，连接池中至少创建的空闲链接，0代表不创建
+    maxcached=5,  # 连接池最多闲置的连接，0和None不限制
+    maxshared=3,  # 链接池中最多共享的连接数量，0和None表示全共享，ps：连接模块默认为1，不生效
+    blocking=True,  # 连接池中如果没有可用连接后，是否阻塞等待，True等待
+    maxusage=None,  # 一个连接最多被重复使用的次数，None表示无限制
+    setsession=[],  # 开始会话前执行的命令列表
+    ping=0,  # ping mysql服务端，检查是否服务可用， 0,1,2,3...
+    host='127.0.0.1',
+    port=3306,
+    user='root',
+    password='123456',
+    database='',
+    charset='utf8',
+)
+
+def task():
+    conn = POOL.connection()
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    cursor.execute('select * from tb1')
+    result = cursor.fetchall()
+    cursor.close()
+    conn.close()
+```
 
