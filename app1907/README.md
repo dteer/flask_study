@@ -1278,3 +1278,181 @@ def task():
     conn.close()
 ```
 
+## 5.2 wtforms的应用
+
+> 具体情况 /flask_study/app1907/app/app11_wtforms
+
+
+
+## 5.3 python 基础知识点
+
+### 5.3.1 可迭代对象
+
+> form 为什么在前端可以被循环？？？
+
+```python
+#可迭代对象
+class Foo(object):
+	#对象迭代方式一
+    def __iter__(self):
+        return iter([1,2,3])
+class Foo(object):
+    #对象迭代方式二
+ 	def __iter__(self):
+        yield 1
+        yield 2
+        yield 3
+
+obj = Foo()
+for item in obj:
+    print(item)
+
+#结果：  1
+		2
+    	3
+```
+
+
+
+### 5.3.2 类对象由来
+
+> 从现象一到现象四，可以了解到对象通过 \_\_new\_\_创建，而类的最终创建者为type
+
+```python
+#现象一
+class Foo(object):
+    def __new__(cls,*args,**kwargs):
+        return 123
+obj = Foo()
+print(type(obj))
+#结果：<class 'int'>
+
+#现象二
+class Foo(object):
+    pass
+obj = Foo()
+print(type(obj))
+#结果：<class '__main__.Foo'>
+
+#现象三
+class Foo(object):
+    def __new__(cls,*args,**kwargs):
+        cls = super(Foo,cls).__new__(cls,*args,**kwargs)
+        return cls
+obj = Foo()
+print(type(obj))
+#结果：<class '__main__.Foo'>
+
+
+#现象四
+class Foo(object):
+    def __new__(cls,*args,**kwargs):
+        return cls
+obj = Foo()
+print(type(obj))
+#结果：<class 'type'>
+
+
+```
+
+### 5.3.3 metaclass(高级语法)
+
+>**创建类是先执行type中的 \_\_init\_\_方法**
+>
+>**当类实例化时，先执行type的 \_\_call\_\_ 方法，\_\_call\_\_方法返回值是实例化对象**
+>
+>​	**_\_call\_\_内部调用：**
+>
+>​			**类._\_new\_\_：创建对象**
+>
+>​			**类._\_init\_\_：对象初始化**
+
+#### 5.3.3.1类的创建
+
+> 从类的创建方式，可以看到类是通过 type创建的
+
+```python
+#类创建方式一
+class Foo1(object):
+    a1 = 123
+    def func(self):
+        return 666
+obj = Foo()
+print(obj.func())
+#结果：666
+
+#类创建方式二
+Foo2 = type('Foo',(object,),{'a1':123,'func':lambda self:666})
+obj = Foo()
+print(obj.func())
+#结果：666
+```
+
+#### 5.3.3.2 自定义type
+
+> 核心点：metaclass指定当前类由谁来创建（默认由type创建）
+
+```python
+#类创建方式一
+class MyType(type):
+    pass
+class Foo(object,metaclass=MyType):
+    def func(self):
+        return 666
+obj = Foo()
+print(obj)
+#结果：<__main__.Foo object at 0x7f3ffab53ac8>
+
+#类创建方式二
+Foo = MyType('Foo',(object,),{'a1':123,'func':lambda self:666})
+#结果：<__main__.Foo object at 0x7fcd53053b38>
+```
+
+#### 5.3.3.3 type的执行流程
+
+> **类实例化前执行type的\_\_init\_\_ 方法**
+
+```python
+#注意类Foo没有实例化，并输出了结果：555
+class MyType(type):
+    def __init__(self,*args,**kwargs):
+        super(MyType,self).__init__(*args,**kwargs)
+        print('555')
+
+class Foo(object,metaclass=MyType):
+    def func(self):
+        return 666
+   
+#结果：555
+```
+
+
+
+> **类实例化后执行type的_\_call\_\_ 方法**
+
+```python
+#类Foo实例化后，调用过程
+class MyType(type):
+    def __init__(self,*args,**kwargs):
+        super(MyType,self).__init__(*args,**kwargs)
+        print(555)
+
+    #cls代指Foo类
+    def __call__(cls, *args, **kwargs):
+        obj = cls.__new__(cls,*args,**kwargs)
+        cls.__init__(obj)
+        print(666)
+        return obj
+
+class Foo(object,metaclass=MyType):
+    def func(self):
+        print(777)
+
+
+obj = Foo()
+obj.func()
+#结果：  555
+		666
+    	777
+```
+
