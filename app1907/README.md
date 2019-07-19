@@ -910,7 +910,7 @@ class Foo(Base):
         print('Foo.func')
 foo = Foo()
 foo.func()
-print(foo.__mro__)
+print(Foo.__mro__)
 
 #结果：
     Base.func
@@ -1430,6 +1430,8 @@ class Foo(object,metaclass=MyType):
 
 > **类实例化后执行type的_\_call\_\_ 方法**
 
+* 注意打印的顺序
+
 ```python
 #类Foo实例化后，调用过程
 class MyType(type):
@@ -1448,11 +1450,46 @@ class Foo(object,metaclass=MyType):
     def func(self):
         print(777)
 
-
+print('444')
 obj = Foo()
 obj.func()
 #结果：  555
+		444
 		666
     	777
+```
+
+## 5.4 wtforms 源码剖析
+
+> 具体请看 /flask_study/app1907/源码探索.md
+
+## 5.4.1 form顺序执行字段的简略版
+
+> 关注点：第一二部分     》》》》name = simple.StringField()
+
+```python
+class Base(object):
+    num = 0
+    def __init__(self, field_class, *args, **kwargs):
+        Base.num += 1
+        #第二部分
+        self.num = Base.num
+class A(object):
+    a = 1
+    def __new__(cls, *args, **kwargs):
+        #第一部分
+        return Base(cls, *args, **kwargs)
+class B(A):
+    pass
+class C(A):
+    pass
+
+a = B()
+print(a.num,type(a))
+b = C()
+print(b.num,type(b))
+
+#结果： 1 <class '__main__.Base'>
+		2 <class '__main__.Base'>
 ```
 
