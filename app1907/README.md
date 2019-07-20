@@ -1,3 +1,7 @@
+---
+typora-root-url: img
+---
+
 [TOC]
 
 # 特殊章节（知识点概要）
@@ -1221,9 +1225,7 @@ print(session())
 
 
 
-![](/home/tang/mnt/F/学习/flask_study/app1907/img/上下文管理流程图.png)
-
-
+![](上下文管理流程图.png)
 
 
 

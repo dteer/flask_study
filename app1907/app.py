@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask,request
 
 app = Flask(__name__)
 
@@ -6,7 +6,12 @@ app = Flask(__name__)
 def f():
     print('te')
 
+@app.route('/index',methods=['GET','POST'])
+def index():
+
+    return 'Index'
+
 
 if __name__ == '__main__':
     app.run()
-    app.__call__
+    app.wsgi_app
