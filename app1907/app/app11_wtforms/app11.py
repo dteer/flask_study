@@ -24,6 +24,10 @@ class LoginForm(Form):
         ],  # 验证
         render_kw={'placeholder': '请输入密码'}
     )
+    def validata_name(self,field):
+        print('钩子函数获取的值',field.data)
+        if field.data.startswith('a'):
+            raise validators.ValidationError('用户名必须以a开头')
 
 
 @app.route('/login', methods=['GET', 'POST'])

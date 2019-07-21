@@ -89,41 +89,45 @@ class comm_use():
         print(res)
 
 
-#条件查询
-def filter():
-    # and条件
-    session.query(Users).filter(Users.id>1,Users.name =='elix').all()
+    #条件查询
+    def filter(self):
+        # and条件
+        session.query(Users).filter(Users.id>1,Users.name =='elix').all()
 
-    #between条件
-    session.query(Users).filter(Users.id.between(1,3),Users.name =='elix').all()
+        #between条件
+        session.query(Users).filter(Users.id.between(1,3),Users.name =='elix').all()
 
-    #in条件
-    session.query(Users).filter(Users.id.in_([1,3,4])).all()
+        #in条件
+        session.query(Users).filter(Users.id.in_([1,3,4])).all()
 
-    #不在in中
-    session.query(Users).filter(~Users.id.in_([1,3,4])).all()
+        #不在in中
+        session.query(Users).filter(~Users.id.in_([1,3,4])).all()
 
-    #子查询
-    session.query(Users).filter(Users.id.in_(session.query(Users.id).filter(Users.name=='eric'))).all()
+        #子查询
+        session.query(Users).filter(Users.id.in_(session.query(Users.id).filter(Users.name=='eric'))).all()
 
-    # and 和 or
-    from sqlalchemy import and_ , or_
-    session.query(Users).filter(and_(Users.id>3,Users.name=='eric')).all()
-    session.query(Users).filter(or_(Users.id<3,Users.name=='eric')).all()
+        # and 和 or
+        from sqlalchemy import and_ , or_
+        session.query(Users).filter(and_(Users.id>3,Users.name=='eric')).all()
+        session.query(Users).filter(or_(Users.id<3,Users.name=='eric')).all()
 
-    session.query(Users).filter(
-        or_(
-            Users.id < 2,
-            and_(Users.name == 'eric', Users.id > 3),
-            Users.extra != ''
-        )
-    ).all()
+        session.query(Users).filter(
+            or_(
+                Users.id < 2,
+                and_(Users.name == 'eric', Users.id > 3),
+                Users.extra != ''
+            )
+        ).all()
 
-    #filter_by
-    session.query(Users).filter_by(name='alex').all()
+        #filter_by
+        session.query(Users).filter_by(name='alex').all()
 
-    # 通配符 like
-    session.query(Users).filter(~Users.name.like('e%')).all()
+        # 通配符 like
+        session.query(Users).filter(~Users.name.like('e%')).all()
 
-    #限制，切片
-    session.query(Users)[1:2]
+        #限制，切片
+        session.query(Users)[1:2]
+
+
+
+session.close()
